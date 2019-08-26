@@ -20,6 +20,7 @@ public:
     }
 
     PiecewiseLinearFunction(std::vector<LinearFunctionDefineOnSegment> functions, Segment function_domain);
+    PiecewiseLinearFunction(std::vector<Point> points);
 
     PiecewiseLinearFunction GetInverseFunction() const;
 
@@ -73,6 +74,15 @@ public:
     PiecewiseLinearFunction MirrorXAndY() const noexcept;
 
     Segment FindFunctionZeroValue() const;
+
+    std::vector<Point> GetPoints() const {
+        std::vector<Point> result;
+        result.emplace_back(functions_[0].GetStartPoint());
+        for (auto&& func : functions_) {
+            result.emplace_back(func.GetEndPoint());
+        }
+        return result;
+    }
 
     void Print() const {
         for (auto&& func : functions_) {

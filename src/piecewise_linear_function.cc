@@ -13,6 +13,22 @@ PiecewiseLinearFunction::PiecewiseLinearFunction(std::vector<LinearFunctionDefin
     ValidateFunctions();
 }
 
+PiecewiseLinearFunction::PiecewiseLinearFunction(std::vector<Point> points) {
+    std::sort(points.begin(), points.end(), [&](auto&& lhs, auto&& rhs) {
+        return lhs.x_coord_ < rhs.x_coord_ || (lhs.x_coord_ == rhs.x_coord_ && lhs.y_coord_ < rhs.y_coord_);
+    });
+    function_domain_.SetStart(points[0].x_coord_);
+    function_domain_.SetEnd(points.back().x_coord_);
+    for (size_t i = 1; i < points.size(); i++) {
+        if (points[i - 1].x_coord_ == points[i].x_coord_) {
+            functions_.emplace_back(points[i - 1].y_coord_, points[i].y_coord_, points[i].x_coord_);
+        } else {
+            functions_.emplace_back(points[i - 1], points[i]);
+        }
+    }
+    ValidateFunctions();
+}
+
 void PiecewiseLinearFunction::Shift(long double x) {
     for (auto& func : functions_) {
         func.Shift(x);

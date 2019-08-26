@@ -4,6 +4,7 @@
 #include "edge.h"
 #include <unordered_map>
 #include <memory>
+#include <fstream>
 
 class StarChainMarket {
 public:
@@ -20,7 +21,7 @@ public:
     static std::optional<StarChainMarket> GenerateRandomMarket(int64_t import_from_center_nodes_count,
             int64_t export_to_center_node_nodes_count, int64_t chain_nodes_count);
 
-    std::vector<std::shared_ptr<Node>>& GetNodes() {
+    std::vector<std::shared_ptr<Node>> GetNodes() {
         return nodes_;
     }
 
@@ -34,6 +35,10 @@ public:
 
     std::shared_ptr<Node> GetCentralNode() const {
         return central_market_node_;
+    }
+
+    bool IsCentralNode(std::shared_ptr<Node> other) const {
+        return central_market_node_ == other;
     }
 
     int64_t GetRootNodePos() const {
@@ -60,7 +65,6 @@ public:
         }
         return result;
     }
-
 
     void ExtendAllSupplyAndDemandFunctionsToMaxDemandZeroingPrice() {
         long double zeroing_point = -1;
@@ -92,11 +96,14 @@ public:
         std::cout << std::endl;
     }
 
+    static StarChainMarket LoadMarket(std::ifstream&);
+    static void StoreMarket(std::ofstream&, StarChainMarket market);
+
     void PrintNodes() {
         for (auto&& node : nodes_) {
 
             auto node_pos = GetVectorPosByNode(node);
-            auto depth = node->GetDepth();
+            [[ maybe_unused ]] auto depth = node->GetDepth();
             std::cout << "Node: " << node_pos << " p:" << node->GetP() <<
                       " vs:" << node->GetVs() << " vd:" << node->GetVd() << " zero price:"
                       << node->GetZeroPrice() << std::endl;
@@ -114,6 +121,45 @@ public:
     long double CalculateWelfare();
 
     void CheckFoundMarketParameters();
+
+    void ClearMarketEdges();
+
+    template<typename CompareWelrafe>
+    int64_t CompareWelrafeAndChangeLinesSubset(EdgeType line_type,
+            std::map<EdgeType, std::set<EdgeType>> other_types,
+            AlgorithmType result_line_type,
+            CompareWelrafe comp) {
+        int64_t add_lines_count = 0;
+        for (auto&& edge : GetEdges()) {
+            if (edge->GetAlgorithmType() == AlgorithmType::L_undefined && edge->GetEdgeType() == line_type) {
+                for (auto&& e : GetEdges()) {
+                    if (e->GetAlgorithmType() == AlgorithmType::L_plus) {
+                        e->SetLineExpand();
+                    } else if (e->GetAlgorithmType() == AlgorithmType::L_undefined
+                            && other_types[line_type].count(e->GetEdgeType()) && e != edge) {
+                        e->SetLineExpand();
+                    } else {
+                        e->SetLineNotExpand();
+                    }
+                }
+
+                SolveAuxiliarySubtask();
+                auto welrafe_without_line = CalculateWelfare();
+
+                edge->SetLineExpand();
+                SolveAuxiliarySubtask();
+                auto welrafe_with_line = CalculateWelfare();
+
+                std::cout << "Welrafe: " << welrafe_without_line << " " << welrafe_with_line << std::endl;
+
+                if (comp(welrafe_without_line, welrafe_with_line)) {
+                    edge->SetAlgorithmType(result_line_type);
+                    add_lines_count++;
+                }
+            }
+        }
+        return add_lines_count;
+    }
 
 private:
     static constexpr long double kdMin = 10;

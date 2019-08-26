@@ -57,6 +57,14 @@ public:
 
     Segment GetValueAtStartPoint() const;
 
+    Point GetStartPoint() const noexcept {
+        return start_;
+    }
+
+    Point GetEndPoint() const noexcept {
+        return end_;
+    }
+
     long double GetXStartCoordinate() const noexcept;
 
     void SetXStartCoordinate(long double x_coordinate) noexcept;

@@ -4,6 +4,9 @@ Edge::Edge(double et, double Q, double ef, double Ev_coeff, std::shared_ptr<Node
         std::shared_ptr<Node> to, EdgeType type)
         :et_(et), Q_(Q), ef_(ef), Ev_coeff_(Ev_coeff), from_(from), to_(to), is_expand_(false), qij_(-1),
          type_(type), algorithm_edge_type_(AlgorithmType::L_undefined) {
+    if (from->GetZeroPrice() > to->GetZeroPrice()) {
+        throw std::runtime_error("Edge must start in node with zero price less than end");
+    }
     CalcEFunction();
     CalcevFunction();
 }
@@ -19,7 +22,7 @@ void Edge::CalcEFunction() {
             }
         };
     } else {
-        E_ = [&](auto&& q)->double {
+        E_ = [&](auto&& q) -> double {
             if (fabs(q) > Q_) {
                 throw std::runtime_error("Edge is not expand");
             } else {
@@ -42,7 +45,6 @@ void Edge::CalcevFunction() {
         functions.emplace_back(et_, et_ + kINF, Q_);
         ev_ = PiecewiseLinearFunction(functions, Segment(0, Q_));
     }
-
 }
 
 bool Edge::operator==(const Edge& other) const {

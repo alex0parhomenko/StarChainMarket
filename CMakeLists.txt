@@ -4,7 +4,7 @@ if ( CMAKE_COMPILER_IS_GNUCC )
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 endif()
 
-set(SOURCES src/star_chain_market.cc src/node.cc src/edge.cc src/linear_function.cc src/piecewise_linear_function.cc  src/linear_function_define_on_segment.cc)
+set(SOURCES src/edge.cc src/star_chain_market.cc src/node.cc  src/linear_function.cc src/piecewise_linear_function.cc  src/linear_function_define_on_segment.cc)
 
 ################################
 # GTest
@@ -18,4 +18,4 @@ add_test( runUnitTests runUnitTests )
 
 
 include_directories(include)
-add_executable(main main.cc ${SOURCES})
+add_executable(start_chain_market main.cc ${SOURCES})

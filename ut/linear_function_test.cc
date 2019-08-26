@@ -23,3 +23,18 @@ TEST(linear_function, shift) {
     }
 }
 
+TEST(point, read) {
+    std::stringstream s("(2.384,-3.4982)");
+
+    Point p(0,0);
+    s >> p;
+    EXPECT_DOUBLE_EQ(p.y_coord_, -3.4982);
+    EXPECT_DOUBLE_EQ(p.x_coord_, 2.384);
+}
+
+TEST(point, write) {
+    std::stringstream of;
+    Point p(1.3, -1.38);
+    of << p;
+    EXPECT_EQ(of.str(), "(1.3,-1.38)");
+}

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <unordered_set>
+#include <sstream>
 
 constexpr long double kEPS = 0.0000001;
 constexpr int64_t kINF = 1e4;
@@ -46,4 +47,26 @@ typename std::enable_if<is_sampled<T>::value, std::vector<T>>::type GenerateVect
     }
     std::sort(result.begin(), result.end());
     return result;
+}
+
+inline auto Split(const std::string& txt, std::vector<std::stringstream>& strs, char ch) {
+    size_t pos = txt.find(ch);
+    size_t initialPos = 0;
+    strs.clear();
+
+    // Decompose statement
+    while( pos != std::string::npos ) {
+        std::stringstream ss;
+        ss << txt.substr( initialPos, pos - initialPos );
+        strs.emplace_back(std::move(ss));
+        initialPos = pos + 1;
+
+        pos = txt.find( ch, initialPos );
+    }
+
+    // Add the last one
+    std::stringstream ss;
+    ss << txt.substr( initialPos, pos - initialPos );
+    strs.emplace_back(std::move(ss));
+    return strs.size();
 }

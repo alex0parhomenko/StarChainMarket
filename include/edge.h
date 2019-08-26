@@ -2,9 +2,9 @@
 #include "piecewise_linear_function.h"
 #include "node.h"
 #include <memory>
+#include <set>
+#include <map>
 #include <functional>
-
-
 
 enum class EdgeType {
     STAR_TO_CENTER = 0,
@@ -13,13 +13,40 @@ enum class EdgeType {
     CHAIN_FROM_CENTER = 3
 };
 
+const std::map<std::string, EdgeType> StrToEdgeType = {
+    {"STAR_TO_CENTER", EdgeType::STAR_TO_CENTER},
+    {"STAR_FROM_CENTER", EdgeType::STAR_FROM_CENTER},
+    {"CHAIN_TO_CENTER", EdgeType::CHAIN_TO_CENTER},
+    {"CHAIN_FROM_CENTER", EdgeType::CHAIN_FROM_CENTER}
+};
 
+const std::vector<std::string> EdgeTypeText = {
+    "STAR_TO_CENTER",
+    "STAR_FROM_CENTER",
+    "CHAIN_TO_CENTER",
+    "CHAIN_FROM_CENTER"
+};
 
 enum class AlgorithmType {
     L_plus = 0,
     L_minus = 1,
     L_undefined = 2
 };
+
+const std::map<EdgeType, std::set<EdgeType>> AdditionalTypes = {
+        {EdgeType::STAR_TO_CENTER, {EdgeType::STAR_FROM_CENTER, EdgeType::CHAIN_FROM_CENTER}},
+        {EdgeType::STAR_FROM_CENTER, {EdgeType::STAR_TO_CENTER, EdgeType::CHAIN_TO_CENTER}},
+        {EdgeType::CHAIN_TO_CENTER, {EdgeType::STAR_FROM_CENTER, EdgeType::CHAIN_FROM_CENTER}},
+        {EdgeType::CHAIN_FROM_CENTER, {EdgeType::STAR_TO_CENTER, EdgeType::CHAIN_TO_CENTER}}
+};
+
+const std::map<EdgeType, std::set<EdgeType>> ConcurentTypes = {
+        {EdgeType::STAR_TO_CENTER, {EdgeType::STAR_TO_CENTER, EdgeType::CHAIN_TO_CENTER}},
+        {EdgeType::STAR_FROM_CENTER, {EdgeType::STAR_FROM_CENTER, EdgeType::CHAIN_FROM_CENTER}},
+        {EdgeType::CHAIN_TO_CENTER, {EdgeType::CHAIN_TO_CENTER, EdgeType::STAR_TO_CENTER}},
+        {EdgeType::CHAIN_FROM_CENTER, {EdgeType::CHAIN_FROM_CENTER, EdgeType::STAR_FROM_CENTER}}
+};
+
 
 class Edge {
 public:
@@ -49,6 +76,9 @@ public:
 
     PiecewiseLinearFunction Getev() const;
     long double Getet() const;
+    long double Getef() const {
+        return ef_;
+    }
     long double GetQ() const;
     EdgeType GetEdgeType() {
         return type_;
@@ -58,17 +88,19 @@ public:
     }
 
     void Print() {
-        std::cout << "et: " << et_ << " Q: " << Q_ << " ef: " << ef_ << " Ev_coeff: " << Ev_coeff_ << std::endl;
+        std::cout << "et: " << et_ << " Q: " << Q_ << " ef: " << ef_ << " Ev_coeff: " << Ev_coeff_
+                  << std::endl;
         std::cout << "IsExpand: " << is_expand_;
         std::cout << " EdgeType: " << EdgeTypeText[static_cast<int>(type_)] << " Algorithm type: " <<
-        AlgorithmTypeText[static_cast<int>(algorithm_edge_type_)] << std::endl;
+                  AlgorithmTypeText[static_cast<int>(algorithm_edge_type_)] << std::endl;
     }
 
     void SetAlgorithmType(AlgorithmType type) {
         algorithm_edge_type_ = type;
     }
 
-    static std::shared_ptr<Edge> GenerateRandomEdge(std::shared_ptr<Node> from, std::shared_ptr<Node> to, EdgeType type);
+    static std::shared_ptr<Edge> GenerateRandomEdge(std::shared_ptr<Node> from, std::shared_ptr<Node> to,
+            EdgeType type);
 private:
     void CalcEFunction();
     void CalcevFunction();
@@ -106,11 +138,5 @@ private:
             "L_plus",
             "L_minus",
             "L_undefined"
-    };
-    std::vector<std::string> EdgeTypeText = {
-            "STAR_TO_CENTER",
-            "STAR_FROM_CENTER",
-            "CHAIN_TO_CENTER",
-            "CHAIN_FROM_CENTER"
     };
 };

@@ -1,6 +1,8 @@
 #include "star_chain_market.h"
 #include <cassert>
 #include <variant>
+#include <fstream>
+#include <sstream>
 
 bool StarChainMarket::AddNode(std::shared_ptr<Node> node, bool is_central_market_node) {
     if (MarketContainNode(node)) {
@@ -255,7 +257,6 @@ void StarChainMarket::FindMarketParameters(std::shared_ptr<Edge> edge, size_t no
 
     // Finding vd
     auto vd_segment = curr_node->GetD().GetValueAtPoint(curr_node->GetP());
-    long double vd = 0;
     if (vd_segment.IsSinglePoint()) {
         curr_node->SetVd(vd_segment.GetSinglePoint());
     } else {
@@ -314,12 +315,11 @@ void StarChainMarket::CheckFoundMarketParameters() {
         } else if (!edge->IsExpand() && pj - pi < -et) {
             assert(fabs(qij + Q) < kEPS);
         } else if (edge->IsExpand() && qij < -Q) {
-            assert(pj - pi ==
-                    -edge->Getet() + 2 * ev_coeff * (fabs(qij) - Q));
+            assert(fabs(pj - pi + et + 2 * ev_coeff * (fabs(qij) - Q)) < kEPS);
         } else if (pj - pi > -et && pj - pi < et) {
             assert(fabs(qij) < kEPS);
-        }  else if (edge->IsExpand() && qij > Q) {
-            assert(pj - pi == et + 2 * ev_coeff * (fabs(qij) - Q));
+        } else if (edge->IsExpand() && qij > Q) {
+            assert(fabs(pj - pi - et - 2 * ev_coeff * (fabs(qij) - Q)) < kEPS);
         } else if (!edge->IsExpand() && pj - pi > et) {
             assert(fabs(qij - Q) < kEPS);
         }
@@ -332,13 +332,8 @@ long double StarChainMarket::CalculateWelfare() {
         auto D_inv = node->GetD().GetInverseFunction();
         auto S_inv = node->GetS().GetInverseFunction();
 
-        auto vd = node->GetVd();
-        auto vs = node->GetVs();
-
         auto U = D_inv.Integrate(0, node->GetVd());
         auto c = S_inv.Integrate(0, node->GetVs());
-        //std::cout << GetVectorPosByNode(node) << " U: " << U << " c: " << c << std::endl;
-
         answer = answer + U - c;
     }
     long double E_sum = 0.0;
@@ -347,4 +342,107 @@ long double StarChainMarket::CalculateWelfare() {
     }
     answer -= E_sum;
     return answer;
+}
+
+void StarChainMarket::ClearMarketEdges() {
+    for (auto&& edge : GetEdges()) {
+        edge->SetLineNotExpand();
+    }
+}
+
+StarChainMarket StarChainMarket::LoadMarket(std::ifstream& stream) {
+    StarChainMarket market;
+    int64_t nodes_count = 0, edges_count = 0;
+    stream >> nodes_count >> edges_count;
+    std::cout << nodes_count << edges_count << std::endl;
+    std::string line;
+    std::vector<std::stringstream> tokens;
+    std::vector<Point> points;
+    std::vector<std::shared_ptr<Node>> nodes;
+    // Read info about each node
+    for (auto node_number = 0; node_number < nodes_count; node_number++) {
+        int32_t num = 0;
+        bool is_central_market_node;
+        stream >> num >> is_central_market_node;
+        // Read Supply function
+        stream.ignore(256, '\n');
+        std::getline(stream, line);
+        Point p(0, 0);
+        Split(line, tokens, ' ');
+        for (auto&& token : tokens) {
+            //std::cout << token.str() << std::endl;
+            token >> p;
+            points.emplace_back(p);
+        }
+        PiecewiseLinearFunction supply(points);
+        points.clear();
+        // Read Demand function
+        std::getline(stream, line);
+        //std::cout << line << std::endl;
+        Split(line, tokens, ' ');
+        for (auto&& token : tokens) {
+            token >> p;
+            points.emplace_back(p);
+        }
+        PiecewiseLinearFunction demand(points);
+        points.clear();
+        auto node = std::make_shared<Node>(demand, supply);
+        nodes.push_back(node);
+        market.AddNode(node, is_central_market_node);
+    }
+    for (auto edge_number = 0; edge_number < edges_count; edge_number++) {
+        long double et = 0, Q = 0, ef = 0, Ev_coeff = 0;
+        int32_t from = 0, to = 0;
+        std::string edge_type;
+        stream >> from >> to >> edge_type;
+        stream >> et >> Q >> ef >> Ev_coeff;
+        auto edge = std::make_shared<Edge>(et, Q, ef, Ev_coeff, nodes[from], nodes[to], StrToEdgeType.at(edge_type));
+        market.AddEdge(edge);
+    }
+    return market;
+}
+
+void StarChainMarket::StoreMarket(std::ofstream& os, StarChainMarket market) {
+    os << market.GetNodes().size() << " " << market.GetEdges().size() << "\n";
+    int32_t node_number = 0;
+    auto nodes = market.GetNodes();
+    for (auto&& node : nodes) {
+        os << node_number << " " << market.IsCentralNode(node) << "\n";
+        auto points = node->GetS().GetPoints();
+        for (size_t i = 0; i < points.size(); i++) {
+            os << points[i];
+            if (i != points.size() - 1) {
+                os << " ";
+            }
+        }
+        os << "\n";
+        points = node->GetD().GetPoints();
+        for (size_t i = 0; i < points.size(); i++) {
+            os << points[i];
+            if (i != points.size() - 1) {
+                os << " ";
+            }
+        }
+        os << "\n";
+        node_number++;
+    }
+
+    for (auto&& edge : market.GetEdges()) {
+        auto from = edge->GetStartNode();
+        int32_t from_pos = -1;
+        auto to = edge->GetEndNode();
+        int32_t to_pos = -1;
+        node_number = 0;
+        for (auto&& node : nodes) {
+            if (node == from) {
+                from_pos = node_number;
+            }
+            if (node == to) {
+                to_pos = node_number;
+            }
+            node_number++;
+        }
+        os << from_pos << " " << to_pos << " " << EdgeTypeText[static_cast<int>(edge->GetEdgeType())] << "\n";
+        os << edge->Getet() << " " << edge->GetQ() << " " << edge->Getef() << " " << edge->GetEvCoeff() << "\n";
+    }
 }

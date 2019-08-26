@@ -1,178 +1,75 @@
-#include "piecewise_linear_function.h"
-#include "linear_function.h"
+
 #include "star_chain_market.h"
 #include <iostream>
-
-void ClearMarketEdges(StarChainMarket& market) {
-    for (auto&& edge : market.GetEdges()) {
-        edge->SetLineNotExpand();
-    }
-}
-
-int64_t AddLinesFromL1ToLplus(StarChainMarket& market) {
-    int64_t add_lines_count = 0;
-    for (auto&& edge : market.GetEdges()) {
-        ClearMarketEdges(market);
-
-        if (edge->GetAlgorithmType() == AlgorithmType::L_undefined && edge->GetEdgeType() == EdgeType::STAR_TO_CENTER) {
-            for (auto&& e : market.GetEdges()) {
-                if (e->GetAlgorithmType() == AlgorithmType::L_plus) {
-                    e->SetLineExpand();
-                }
-                if (e->GetAlgorithmType() == AlgorithmType::L_undefined && (e->GetEdgeType() == EdgeType::STAR_TO_CENTER ||
-                        e->GetEdgeType() == EdgeType::CHAIN_TO_CENTER) && e != edge) {
-                    e->SetLineExpand();
-                }
-            }
-
-            market.SolveAuxiliarySubtask();
-            auto welrafe_without_line = market.CalculateWelfare();
-
-            edge->SetLineExpand();
-            market.SolveAuxiliarySubtask();
-            auto welrafe_with_line = market.CalculateWelfare();
-
-            if (welrafe_without_line < welrafe_with_line) {
-                edge->SetAlgorithmType(AlgorithmType::L_plus);
-                add_lines_count++;
-            }
-        }
-    }
-    return add_lines_count;
-}
-
-int64_t AddLinesFromL2ToLminus(StarChainMarket& market) {
-    int64_t add_lines_count = 0;
-    for (auto&& edge : market.GetEdges()) {
-        ClearMarketEdges(market);
-
-        if (edge->GetAlgorithmType() == AlgorithmType::L_undefined && edge->GetEdgeType() == EdgeType::STAR_FROM_CENTER) {
-            for (auto&& e : market.GetEdges()) {
-                if (e->GetAlgorithmType() == AlgorithmType::L_plus) {
-                    e->SetLineExpand();
-                }
-                if (e->GetAlgorithmType() == AlgorithmType::L_undefined && (e->GetEdgeType() == EdgeType::STAR_TO_CENTER ||
-                        e->GetEdgeType() == EdgeType::CHAIN_TO_CENTER) && e != edge) {
-                    e->SetLineExpand();
-                }
-            }
-
-            market.SolveAuxiliarySubtask();
-            auto welrafe_without_line = market.CalculateWelfare();
-
-            edge->SetLineExpand();
-            market.SolveAuxiliarySubtask();
-            auto welrafe_with_line = market.CalculateWelfare();
-
-            if (welrafe_with_line < welrafe_without_line) {
-                edge->SetAlgorithmType(AlgorithmType::L_minus);
-                add_lines_count++;
-            }
-        }
-    }
-    return add_lines_count;
-}
-
-
-int64_t AddLinesFromL1ToLminus(StarChainMarket& market) {
-    int64_t add_lines_count = 0;
-    for (auto&& edge : market.GetEdges()) {
-        ClearMarketEdges(market);
-
-        if (edge->GetAlgorithmType() == AlgorithmType::L_undefined
-                && edge->GetEdgeType() == EdgeType::STAR_TO_CENTER) {
-            for (auto&& e : market.GetEdges()) {
-                if (e->GetAlgorithmType() == AlgorithmType::L_plus) {
-                    e->SetLineExpand();
-                }
-                if (e->GetAlgorithmType() == AlgorithmType::L_undefined
-                        && (e->GetEdgeType() == EdgeType::STAR_FROM_CENTER ||
-                                e->GetEdgeType() == EdgeType::CHAIN_FROM_CENTER) && e != edge) {
-                    e->SetLineExpand();
-                }
-            }
-
-            market.SolveAuxiliarySubtask();
-            auto welrafe_without_line = market.CalculateWelfare();
-
-            edge->SetLineExpand();
-            market.SolveAuxiliarySubtask();
-            auto welrafe_with_line = market.CalculateWelfare();
-
-            if (welrafe_with_line < welrafe_without_line) {
-                edge->SetAlgorithmType(AlgorithmType::L_minus);
-                add_lines_count++;
-            }
-        }
-    }
-    return add_lines_count;
-}
-
-int64_t AddLinesFromL2ToLplus(StarChainMarket& market) {
-    int64_t add_lines_count = 0;
-    for (auto&& edge : market.GetEdges()) {
-        ClearMarketEdges(market);
-
-        if (edge->GetAlgorithmType() == AlgorithmType::L_undefined && edge->GetEdgeType() == EdgeType::STAR_FROM_CENTER) {
-            for (auto&& e : market.GetEdges()) {
-                if (e->GetAlgorithmType() == AlgorithmType::L_plus) {
-                    e->SetLineExpand();
-                }
-                if (e->GetAlgorithmType() == AlgorithmType::L_undefined && (e->GetEdgeType() == EdgeType::STAR_FROM_CENTER ||
-                        e->GetEdgeType() == EdgeType::CHAIN_FROM_CENTER) && e != edge) {
-                    e->SetLineExpand();
-                }
-            }
-
-            market.SolveAuxiliarySubtask();
-            auto welrafe_without_line = market.CalculateWelfare();
-
-            edge->SetLineExpand();
-            market.SolveAuxiliarySubtask();
-            auto welrafe_with_line = market.CalculateWelfare();
-
-            if ( welrafe_without_line < welrafe_with_line) {
-                edge->SetAlgorithmType(AlgorithmType::L_plus);
-                add_lines_count++;
-            }
-        }
-    }
-    return add_lines_count;
-}
+#include <fstream>
 
 void Algorithm(StarChainMarket& market) {
-    auto it = 0;
+    auto changed_lines = 0;
 
-    auto add_lines = AddLinesFromL1ToLplus(market);
-    auto remove_lines = AddLinesFromL2ToLminus(market);
+    while (market.UndefinedLinesCount() && changed_lines > 0) {
+        changed_lines = 0;
+        auto step1_changed_lines = 0;
+        do {
+            step1_changed_lines = 0;
+            // AddLinesFromL1ToLplus
+            step1_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::STAR_TO_CENTER,
+                    ConcurentTypes, AlgorithmType::L_plus, std::less_equal<>());
+            //AddLinesFromL2ToLminus
+            step1_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::STAR_FROM_CENTER,
+                    AdditionalTypes, AlgorithmType::L_minus, std::greater_equal<>());
+            //AddLinesFromL1ToLminus
+            step1_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::STAR_TO_CENTER,
+                    AdditionalTypes, AlgorithmType::L_minus, std::greater_equal<>());
+            //AddLinesFromL2ToLplus
+            step1_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::STAR_FROM_CENTER,
+                    ConcurentTypes, AlgorithmType::L_plus, std::less_equal<>());
+            changed_lines += step1_changed_lines;
+        }
+        while (market.UndefinedLinesCount() && step1_changed_lines > 0);
 
-    if (market.UndefinedLinesCount() != 0) {
-        AddLinesFromL1ToLminus(market);
-        AddLinesFromL2ToLplus(market);
+        auto step2_changed_lines = 0;
+        do {
+            step2_changed_lines = 0;
+            // AddLinesFromL'1ToLplus
+            step2_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::CHAIN_TO_CENTER,
+                    ConcurentTypes,
+                    AlgorithmType::L_plus, std::less_equal<>());
+            //AddLinesFromL'2ToLminus
+            step2_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::CHAIN_FROM_CENTER,
+                    AdditionalTypes,
+                    AlgorithmType::L_minus, std::greater_equal<>());
+            //AddLinesFromL'1ToLminus
+            step2_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::CHAIN_TO_CENTER,
+                    AdditionalTypes, AlgorithmType::L_minus, std::greater_equal<>());
+            //AddLinesFromL'2ToLplus
+            step2_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::CHAIN_FROM_CENTER,
+                    ConcurentTypes, AlgorithmType::L_plus, std::less_equal<>());
+            changed_lines += step2_changed_lines;
+        }
+        while (market.UndefinedLinesCount() > 0 && step2_changed_lines > 0);
     }
 }
 
-int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
-    for (int nodes_count = 5; nodes_count < 6; nodes_count++) {
-        auto import_nodes = nodes_count;
-        auto export_nodes = nodes_count;
-        auto chain_nodes = nodes_count;
-        auto market_opt = StarChainMarket::GenerateRandomMarket(import_nodes, export_nodes, chain_nodes);
-        while (!market_opt.has_value()) {
-            market_opt = StarChainMarket::GenerateRandomMarket(import_nodes, export_nodes, chain_nodes);
-        }
-        auto market = market_opt.value();
+void StoreGeneratedMarket(char** argv) {
+    std::ofstream f(argv[1], std::ios_base::out);
+    auto market = StarChainMarket::GenerateRandomMarket(2, 3, 4);
+    StarChainMarket::StoreMarket(f, *market);
+    f.close();
+}
 
-        market.BuildTreeMinDepth();
-        market.SolveAuxiliarySubtask();
+inline auto LoadMarket(char** argv) {
+    std::ifstream f(argv[1], std::ios_base::in);
+    auto market = StarChainMarket::LoadMarket(f);
+    f.close();
+    market.PrintAll();
+    return market;
+}
 
-        market.PrintAll();
-        //Algorithm(market);
-
-        //for (auto&& edge : market.GetEdges()) {
-        //    edge->Print();
-        //}
+int main(int argc, char** argv) {
+    if (argc < 2) {
+        throw std::runtime_error("Too few arguments");
     }
-
+    auto market = LoadMarket(argv);
+    Algorithm(market);
     return 0;
 }

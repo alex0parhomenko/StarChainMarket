@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "segment.h"
 #include <stdexcept>
+#include <fstream>
 
 /*
  * Implementation of function a * x + b * y = c
@@ -59,3 +60,6 @@ struct Point {
 
     long double x_coord_, y_coord_;
 };
+
+std::ostream& operator<<(std::ostream& os, const Point& p);
+std::istream& operator>>(std::istream &in, Point& p);

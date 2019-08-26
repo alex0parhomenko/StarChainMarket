@@ -100,4 +100,20 @@ void LinearFunction::Validate() const {
     }
 }
 
+std::ostream& operator<<(std::ostream& os, const Point& p) {
+    os << "(" << p.x_coord_ << "," << p.y_coord_ << ")";
+    return os;
+}
 
+std::istream& operator>>(std::istream& in, Point& p) {
+    char c;
+    in.get(c);
+    assert(c == '(');
+    in >> p.x_coord_;
+    in.get(c);
+    assert(c == ',');
+    in >> p.y_coord_;
+    in.get(c);
+    assert(c == ')');
+    return in;
+}

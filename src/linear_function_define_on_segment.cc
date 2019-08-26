@@ -5,8 +5,8 @@ LinearFunctionDefineOnSegment::LinearFunctionDefineOnSegment(long double min_y, 
         func_(0, 1, 0),
         start_{x, min_y},
         end_{x, max_y},
-        vertical_segment_(min_y, max_y),
-        is_vertical_(true) {
+        is_vertical_(true),
+        vertical_segment_(min_y, max_y) {
     if (min_y > max_y) {
         throw std::runtime_error("min_y must be less than max_y");
     }
@@ -28,10 +28,6 @@ LinearFunctionDefineOnSegment::LinearFunctionDefineOnSegment(Point start, Point 
     start_(start),
     end_(end),
     is_vertical_(false) {
-
-    if (start.x_coord_ == end.x_coord_) {
-        throw std::runtime_error("Don't use this constructor for vertical functions");
-    }
     Validate();
 }
 
@@ -66,6 +62,7 @@ LinearFunctionDefineOnSegment LinearFunctionDefineOnSegment::operator+(
         return LinearFunctionDefineOnSegment(start_coord,
                 start_coord + other.vertical_segment_.GetLength() + vertical_segment_.GetLength(), start_.x_coord_);
     }
+
 }
 
 LinearFunctionDefineOnSegment LinearFunctionDefineOnSegment::operator-(
@@ -91,6 +88,7 @@ LinearFunctionDefineOnSegment LinearFunctionDefineOnSegment::operator-(
         }
         return LinearFunctionDefineOnSegment(x1, x2, start_.x_coord_);
     }
+    throw std::runtime_error("Unexpected case");
 }
 
 Segment LinearFunctionDefineOnSegment::GetValueAtPoint(long double x) const {
@@ -240,10 +238,8 @@ bool LinearFunctionDefineOnSegment::IsHorizontal() const {
 LinearFunctionDefineOnSegment LinearFunctionDefineOnSegment::Derivative() const noexcept {
     if (!is_vertical_) {
         return LinearFunctionDefineOnSegment(func_.DerivativeX(), start_.x_coord_, end_.x_coord_);
-    } else {
-        throw std::runtime_error("Not implemented");
     }
-
+    throw std::runtime_error("Vertical function can't derivative");
 }
 
 LinearFunctionDefineOnSegment LinearFunctionDefineOnSegment::MirrorXAndY() const noexcept {

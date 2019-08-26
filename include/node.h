@@ -66,10 +66,6 @@ public:
         p_ = p;
     }
 
-    long double CalculateCostFunction() {
-        auto S_inv = S_.GetInverseFunction();
-    }
-
     long double GetZeroPrice() {
         return GetDeltaS().FindFunctionZeroValue().GetSinglePoint();
     }
