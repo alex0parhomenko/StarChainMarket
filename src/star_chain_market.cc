@@ -446,3 +446,48 @@ void StarChainMarket::StoreMarket(std::ofstream& os, StarChainMarket market) {
         os << edge->Getet() << " " << edge->GetQ() << " " << edge->Getef() << " " << edge->GetEvCoeff() << "\n";
     }
 }
+
+int64_t StarChainMarket::CompareWelrafeAndChangeLinesSubsetForChainLines(
+        std::vector<std::shared_ptr<Edge>> l_plus_lines,
+        std::vector<std::shared_ptr<Edge>> l_minus_lines,
+        EdgeType edge_type) {
+    int64_t add_lines_count = 0;
+    for (auto&& edge : GetEdges()) {
+        if (edge->GetAlgorithmType() == AlgorithmType::L_plus) {
+            edge->SetLineExpand();
+        } else if (edge->GetAlgorithmType() == AlgorithmType::L_undefined
+                && edge->GetEdgeType() == edge_type) {
+
+            if (std::find(l_plus_lines.begin(), l_plus_lines.end(), edge) == l_plus_lines.end()
+            && std::find(l_minus_lines.begin(), l_minus_lines.end(), edge) == l_minus_lines.end()) {
+                edge->SetLineExpand();
+            }
+        } else if (edge->GetAlgorithmType() == AlgorithmType::L_minus) {
+            edge->SetLineNotExpand();
+        } else {
+            throw std::runtime_error("Invalid variant");
+        }
+
+        SolveAuxiliarySubtask();
+        auto welrafe_without_lines = CalculateWelfare();
+
+        for (auto&& edge : l_plus_lines) {
+            edge->SetLineExpand();
+        }
+        for (auto&& edge : l_minus_lines) {
+            edge->SetLineNotExpand();
+        }
+        SolveAuxiliarySubtask();
+        auto welrafe_with_lines = CalculateWelfare();
+        if (welrafe_without_lines <= welrafe_with_lines) {
+            for (auto&& edge : l_plus_lines) {
+                edge->SetAlgorithmType(AlgorithmType::L_plus);
+            }
+            for (auto&& edge : l_minus_lines) {
+                edge->SetAlgorithmType(AlgorithmType::L_minus);
+            }
+            add_lines_count = l_plus_lines.size() + l_minus_lines.size();
+        }
+    }
+    return add_lines_count;
+}

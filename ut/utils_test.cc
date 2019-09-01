@@ -60,3 +60,26 @@ TEST(gen_random_vector, gen_double_vec) {
     }
 }
 
+TEST(GetOnesBitsCount, test1) {
+    EXPECT_EQ(GetOnesBitsCount(0), 0);
+    EXPECT_EQ(GetOnesBitsCount(5), 2);
+    EXPECT_EQ(GetOnesBitsCount(10), 2);
+    EXPECT_EQ(GetOnesBitsCount(23892), 8);
+    EXPECT_EQ(GetOnesBitsCount(2002818392), 15);
+    EXPECT_EQ(GetOnesBitsCount(2930000909999999), 35);
+}
+
+TEST(GenerateBitMasks, base_test) {
+    size_t sz = 3;
+    auto res = GenerateBitMasks(sz);
+    EXPECT_EQ(res.size(), 3);
+    auto zz = res[1];
+    std::sort(zz.begin(), zz.end());
+    EXPECT_EQ(zz, std::vector<int64_t>({1, 2, 4}));
+    zz = res[2];
+    std::sort(zz.begin(), zz.end());
+    EXPECT_EQ(zz, std::vector<int64_t>({3, 5, 6}));
+    zz = res[3];
+    std::sort(zz.begin(), zz.end());
+    EXPECT_EQ(zz, std::vector<int64_t>({7}));
+}

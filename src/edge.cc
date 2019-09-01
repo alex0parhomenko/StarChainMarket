@@ -5,7 +5,7 @@ Edge::Edge(double et, double Q, double ef, double Ev_coeff, std::shared_ptr<Node
         :et_(et), Q_(Q), ef_(ef), Ev_coeff_(Ev_coeff), from_(from), to_(to), is_expand_(false), qij_(-1),
          type_(type), algorithm_edge_type_(AlgorithmType::L_undefined) {
     if (from->GetZeroPrice() > to->GetZeroPrice()) {
-        throw std::runtime_error("Edge must start in node with zero price less than end");
+        //throw std::runtime_error("Edge must start in node with zero price less than end");
     }
     CalcEFunction();
     CalcevFunction();

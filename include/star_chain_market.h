@@ -29,6 +29,18 @@ public:
         return edges_;
     }
 
+    std::vector<std::shared_ptr<Edge>> GetUndefinedChainEdges() {
+        std::vector<std::shared_ptr<Edge>> result;
+        for (auto&& edge : edges_) {
+            if ((edge->GetEdgeType() == EdgeType::CHAIN_TO_CENTER
+                    || edge->GetEdgeType() == EdgeType::CHAIN_FROM_CENTER)
+                    && edge->GetAlgorithmType() == AlgorithmType::L_undefined) {
+                result.emplace_back(edge);
+            }
+        }
+        return result;
+    }
+
     std::vector<std::vector<std::shared_ptr<Edge>>>& GetMatrix() {
         return matrix_;
     }
@@ -96,6 +108,18 @@ public:
         std::cout << std::endl;
     }
 
+    size_t GetUndefinedChainLinesCount() {
+        size_t answer = 0;
+        for (auto&& edge : edges_) {
+            if ((edge->GetEdgeType() == EdgeType::CHAIN_TO_CENTER
+            || edge->GetEdgeType() == EdgeType::CHAIN_FROM_CENTER)
+            && edge->GetAlgorithmType() == AlgorithmType::L_undefined) {
+                answer++;
+            }
+        }
+        return answer;
+    }
+
     static StarChainMarket LoadMarket(std::ifstream&);
     static void StoreMarket(std::ofstream&, StarChainMarket market);
 
@@ -124,6 +148,11 @@ public:
 
     void ClearMarketEdges();
 
+    int64_t CompareWelrafeAndChangeLinesSubsetForChainLines(
+            std::vector<std::shared_ptr<Edge>> l_plus_lines,
+            std::vector<std::shared_ptr<Edge>> l_minus_lines,
+            EdgeType edge_type);
+
     template<typename CompareWelrafe>
     int64_t CompareWelrafeAndChangeLinesSubset(EdgeType line_type,
             std::map<EdgeType, std::set<EdgeType>> other_types,
@@ -150,7 +179,7 @@ public:
                 SolveAuxiliarySubtask();
                 auto welrafe_with_line = CalculateWelfare();
 
-                std::cout << "Welrafe: " << welrafe_without_line << " " << welrafe_with_line << std::endl;
+                //std::cout << "Welrafe: " << welrafe_without_line << " " << welrafe_with_line << std::endl;
 
                 if (comp(welrafe_without_line, welrafe_with_line)) {
                     edge->SetAlgorithmType(result_line_type);

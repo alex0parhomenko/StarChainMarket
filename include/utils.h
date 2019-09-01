@@ -5,7 +5,9 @@
 #include <algorithm>
 #include <type_traits>
 #include <unordered_set>
+#include <map>
 #include <sstream>
+#include <iostream>
 
 constexpr long double kEPS = 0.0000001;
 constexpr int64_t kINF = 1e4;
@@ -70,3 +72,32 @@ inline auto Split(const std::string& txt, std::vector<std::stringstream>& strs, 
     strs.emplace_back(std::move(ss));
     return strs.size();
 }
+
+inline auto GetOnesBitsCount(int64_t mask) {
+    int result = 0;
+    for (auto i = 0; i < 64; i++) {
+        if ((mask >> i) & 1) {
+            result++;
+        }
+    }
+    return result;
+}
+
+inline auto GenerateBitMasks(size_t length) {
+    if (length > 64) {
+        throw std::runtime_error("Length of mask overflow");
+    }
+    int64_t mask = 0;
+    for (size_t i = 0; i < length; i++) {
+        mask |= (1 << i);
+    }
+    std::unordered_map<size_t, std::vector<int64_t>> ones_bits_to_masks;
+    while (mask != 0) {
+        auto ones_bits_count = GetOnesBitsCount(mask);
+        ones_bits_to_masks[ones_bits_count].emplace_back(mask);
+        mask--;
+    }
+    return ones_bits_to_masks;
+}
+
+
