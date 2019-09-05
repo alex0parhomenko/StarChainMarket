@@ -97,6 +97,7 @@ inline auto GenerateBitMasks(size_t length) {
         ones_bits_to_masks[ones_bits_count].emplace_back(mask);
         mask--;
     }
+    ones_bits_to_masks[0].emplace_back(0);
     return ones_bits_to_masks;
 }
 

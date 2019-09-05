@@ -344,9 +344,10 @@ long double StarChainMarket::CalculateWelfare() {
     return answer;
 }
 
-void StarChainMarket::ClearMarketEdges() {
+void StarChainMarket::ClearMarketEdgesAlgorithmType() {
     for (auto&& edge : GetEdges()) {
         edge->SetLineNotExpand();
+        edge->SetAlgorithmType(AlgorithmType::L_undefined);
     }
 }
 

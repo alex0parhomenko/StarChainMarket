@@ -146,7 +146,7 @@ public:
 
     void CheckFoundMarketParameters();
 
-    void ClearMarketEdges();
+    void ClearMarketEdgesAlgorithmType();
 
     int64_t CompareWelrafeAndChangeLinesSubsetForChainLines(
             std::vector<std::shared_ptr<Edge>> l_plus_lines,
