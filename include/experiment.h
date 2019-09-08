@@ -14,21 +14,30 @@ inline auto Experiment(
     auto edges = market.GetEdges();
     auto bit_masks_map = GenerateBitMasks(edges.size());
     std::unordered_map<int64_t, float> mask_to_welrafe;
-    float best_brute_force_welrafe = -1e9;
+    float best_brute_force_welrafe = -1e5;
     for (auto&& [bits_count, masks] : bit_masks_map) {
         for (auto&& mask : masks) {
             market.ClearMarketEdgesAlgorithmType();
             for (size_t i = 0; i < edges.size(); i++) {
                 if ((mask >> i) & 1) {
                     edges[i]->SetAlgorithmType(AlgorithmType::L_plus);
+                    edges[i]->SetLineExpand();
                 }
             }
-            mask_to_welrafe[mask] = market.CalculateWelfare();
+            market.SolveAuxiliarySubtask();
+            const auto welrafe = market.CalculateWelfare();
+            if (welrafe < 0 ) {
+                market.PrintAll();
+                exit(1);
+            }
+            mask_to_welrafe[mask] = welrafe;
+            //std::cout << "Welrafe: " << mask_to_welrafe[mask] << std::endl;
             best_brute_force_welrafe = std::max(best_brute_force_welrafe, mask_to_welrafe[mask]);
         }
     }
     market.ClearMarketEdgesAlgorithmType();
     Algorithm(market);
+    market.SolveAuxiliarySubtask();
     float algorithm_welrafe = market.CalculateWelfare();
     return std::make_pair(best_brute_force_welrafe, algorithm_welrafe);
 }

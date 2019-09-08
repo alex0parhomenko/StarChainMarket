@@ -19,17 +19,16 @@ inline auto LoadMarket(char** argv) {
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
-    const auto max_lines = 16;
-    for (int i = 1; i < 8; i++) {
-        for (int j = 1; j < 8; j++) {
+    const auto max_lines = 12;
+    for (int i = 1; i < 6; i++) {
+        for (int j = 1; j < 6; j++) {
             auto&& [brute_force_welrafe, algorithm_welrafe] = Experiment(i, j, max_lines - i - j);
             if (algorithm_welrafe >= brute_force_welrafe) {
-                std::cout << "Success" << std::flush << std::endl;
+                std::cout << "Success algorithm: " << algorithm_welrafe << " brute_force: " << brute_force_welrafe << std::flush << std::endl;
             } else {
-                std::cout << "Fail" << std::flush << std::endl;
+                std::cout << "Fail algorithm: " << algorithm_welrafe << " brute_force: " << brute_force_welrafe << std::flush << std::endl;
             }
         }
     }
-
     return 0;
 }
