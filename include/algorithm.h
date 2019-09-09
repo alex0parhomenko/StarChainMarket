@@ -2,23 +2,23 @@
 
 #include "star_chain_market.h"
 
-inline int AlgorithmProcessStarEdges(StarChainMarket& market) {
+inline int AlgorithmProcessStarEdges(StarChainMarket& market, int& tasks_solved) {
     auto step1_changed_lines = 0;
     auto changed_lines = 0;
     do {
         step1_changed_lines = 0;
         // AddLinesFromL1ToLplus
         step1_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::STAR_TO_CENTER,
-                ConcurentTypes, AlgorithmType::L_plus, std::less_equal<>());
+                ConcurentTypes, AlgorithmType::L_plus, std::less_equal<>(), tasks_solved);
         //AddLinesFromL2ToLminus
         step1_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::STAR_FROM_CENTER,
-                AdditionalTypes, AlgorithmType::L_minus, std::greater_equal<>());
+                AdditionalTypes, AlgorithmType::L_minus, std::greater_equal<>(), tasks_solved);
         //AddLinesFromL1ToLminus
         step1_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::STAR_TO_CENTER,
-                AdditionalTypes, AlgorithmType::L_minus, std::greater_equal<>());
+                AdditionalTypes, AlgorithmType::L_minus, std::greater_equal<>(), tasks_solved);
         //AddLinesFromL2ToLplus
         step1_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::STAR_FROM_CENTER,
-                ConcurentTypes, AlgorithmType::L_plus, std::less_equal<>());
+                ConcurentTypes, AlgorithmType::L_plus, std::less_equal<>(), tasks_solved);
         changed_lines += step1_changed_lines;
     }
     while (market.UndefinedLinesCount() && step1_changed_lines > 0);
@@ -26,7 +26,7 @@ inline int AlgorithmProcessStarEdges(StarChainMarket& market) {
 }
 
 
-inline int AlgorithmProcessChainEdges(StarChainMarket& market) {
+inline int AlgorithmProcessChainEdges(StarChainMarket& market, int& tasks_solved) {
     auto changed_lines = 0;
     auto step2_changed_lines = 0;
     do {
@@ -34,17 +34,18 @@ inline int AlgorithmProcessChainEdges(StarChainMarket& market) {
         // AddLinesFromL'1ToLplus
         step2_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::CHAIN_TO_CENTER,
                 ConcurentTypes,
-                AlgorithmType::L_plus, std::less_equal<>());
+                AlgorithmType::L_plus, std::less_equal<>(), tasks_solved);
+
         //AddLinesFromL'2ToLminus
         step2_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::CHAIN_FROM_CENTER,
                 AdditionalTypes,
-                AlgorithmType::L_minus, std::greater_equal<>());
+                AlgorithmType::L_minus, std::greater_equal<>(), tasks_solved);
         //AddLinesFromL'1ToLminus
         step2_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::CHAIN_TO_CENTER,
-                AdditionalTypes, AlgorithmType::L_minus, std::greater_equal<>());
+                AdditionalTypes, AlgorithmType::L_minus, std::greater_equal<>(), tasks_solved);
         //AddLinesFromL'2ToLplus
         step2_changed_lines += market.CompareWelrafeAndChangeLinesSubset(EdgeType::CHAIN_FROM_CENTER,
-                ConcurentTypes, AlgorithmType::L_plus, std::less_equal<>());
+                ConcurentTypes, AlgorithmType::L_plus, std::less_equal<>(), tasks_solved);
         changed_lines += step2_changed_lines;
     }
     while (market.UndefinedLinesCount() > 0 && step2_changed_lines > 0);
@@ -52,13 +53,15 @@ inline int AlgorithmProcessChainEdges(StarChainMarket& market) {
 }
 
 inline void Algorithm(StarChainMarket& market) {
+    int count_solve_subtasks_count = 0;
+
     auto multiply_lines_in_chain_changed = 0;
     do {
         auto changed_lines = 0;
         do {
             changed_lines = 0;
-            changed_lines += AlgorithmProcessStarEdges(market);
-            changed_lines += AlgorithmProcessChainEdges(market);
+            changed_lines += AlgorithmProcessStarEdges(market, count_solve_subtasks_count);
+            changed_lines += AlgorithmProcessChainEdges(market, count_solve_subtasks_count);
         } while (market.UndefinedLinesCount() && changed_lines > 0);
 
         multiply_lines_in_chain_changed = 0;
@@ -87,17 +90,18 @@ inline void Algorithm(StarChainMarket& market) {
                 }
                 multiply_lines_in_chain_changed +=
                         market.CompareWelrafeAndChangeLinesSubsetForChainLines(lines_to_change_chain_to_center,
-                                lines_to_change_chain_from_center, EdgeType::CHAIN_FROM_CENTER);
+                                lines_to_change_chain_from_center, EdgeType::CHAIN_FROM_CENTER, count_solve_subtasks_count);
                 if (multiply_lines_in_chain_changed) {
                     break;
                 }
                 multiply_lines_in_chain_changed +=
                         market.CompareWelrafeAndChangeLinesSubsetForChainLines(lines_to_change_chain_from_center,
-                                lines_to_change_chain_to_center, EdgeType::CHAIN_FROM_CENTER);
+                                lines_to_change_chain_to_center, EdgeType::CHAIN_FROM_CENTER, count_solve_subtasks_count);
                 if (multiply_lines_in_chain_changed) {
                     break;
                 }
             }
         }
     } while (market.UndefinedLinesCount() && multiply_lines_in_chain_changed > 0);
+    std::cout << "Algorithm solved AuxularitySubtasksCount: " << count_solve_subtasks_count << std::endl;
 }

@@ -57,6 +57,18 @@ public:
         return tree_root_pos_;
     }
 
+    std::vector<bool> GetLplushLinesMask() {
+        std::vector<bool> answer;
+        for (auto&& edge : edges_) {
+            if (edge->GetAlgorithmType() == AlgorithmType::L_plus) {
+                answer.emplace_back(true);
+            } else {
+                answer.emplace_back(false);
+            }
+        }
+        return answer;
+    }
+
     void SolveAuxiliarySubtask();
 
     void Dfs(size_t node_pos, std::vector<bool>& used, int64_t depth = 0);
@@ -151,13 +163,15 @@ public:
     int64_t CompareWelrafeAndChangeLinesSubsetForChainLines(
             std::vector<std::shared_ptr<Edge>> l_plus_lines,
             std::vector<std::shared_ptr<Edge>> l_minus_lines,
-            EdgeType edge_type);
+            EdgeType edge_type,
+            int& tasks_solved);
 
     template<typename CompareWelrafe>
     int64_t CompareWelrafeAndChangeLinesSubset(EdgeType line_type,
             std::map<EdgeType, std::set<EdgeType>> other_types,
             AlgorithmType result_line_type,
-            CompareWelrafe comp) {
+            CompareWelrafe comp,
+            int& tasks_solved) {
         int64_t add_lines_count = 0;
         for (auto&& edge : GetEdges()) {
             if (edge->GetAlgorithmType() == AlgorithmType::L_undefined && edge->GetEdgeType() == line_type) {
@@ -173,10 +187,12 @@ public:
                 }
 
                 SolveAuxiliarySubtask();
+                tasks_solved++;
                 auto welrafe_without_line = CalculateWelfare();
 
                 edge->SetLineExpand();
                 SolveAuxiliarySubtask();
+                tasks_solved++;
                 auto welrafe_with_line = CalculateWelfare();
 
                 //std::cout << "Welrafe: " << welrafe_without_line << " " << welrafe_with_line << std::endl;

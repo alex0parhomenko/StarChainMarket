@@ -451,7 +451,8 @@ void StarChainMarket::StoreMarket(std::ofstream& os, StarChainMarket market) {
 int64_t StarChainMarket::CompareWelrafeAndChangeLinesSubsetForChainLines(
         std::vector<std::shared_ptr<Edge>> l_plus_lines,
         std::vector<std::shared_ptr<Edge>> l_minus_lines,
-        EdgeType edge_type) {
+        EdgeType edge_type,
+        int& tasks_solved) {
     int64_t add_lines_count = 0;
     for (auto&& edge : GetEdges()) {
         if (edge->GetAlgorithmType() == AlgorithmType::L_plus) {
@@ -470,6 +471,7 @@ int64_t StarChainMarket::CompareWelrafeAndChangeLinesSubsetForChainLines(
         }
 
         SolveAuxiliarySubtask();
+        tasks_solved++;
         auto welrafe_without_lines = CalculateWelfare();
 
         for (auto&& edge : l_plus_lines) {
@@ -479,6 +481,7 @@ int64_t StarChainMarket::CompareWelrafeAndChangeLinesSubsetForChainLines(
             edge->SetLineNotExpand();
         }
         SolveAuxiliarySubtask();
+        tasks_solved++;
         auto welrafe_with_lines = CalculateWelfare();
         if (welrafe_without_lines <= welrafe_with_lines) {
             for (auto&& edge : l_plus_lines) {

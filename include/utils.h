@@ -101,4 +101,21 @@ inline auto GenerateBitMasks(size_t length) {
     return ones_bits_to_masks;
 }
 
+inline auto MaskToVector(int64_t mask, size_t edges_count) {
+    std::vector<bool> answer;
+    for (size_t i = 0; i < edges_count; i++) {
+        if ((mask >> i) & 1) {
+            answer.emplace_back(true);
+        } else {
+            answer.emplace_back(false);
+        }
+    }
+    return answer;
+}
 
+template<typename Vector>
+inline void PrintVector(Vector v) {
+    for (auto&& elem : v) {
+        std::cout << elem << ", ";
+    }
+}

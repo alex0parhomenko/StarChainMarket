@@ -15,6 +15,7 @@ inline auto Experiment(
     auto bit_masks_map = GenerateBitMasks(edges.size());
     std::unordered_map<int64_t, float> mask_to_welrafe;
     float best_brute_force_welrafe = -1e5;
+    int64_t best_mask = 0;
     for (auto&& [bits_count, masks] : bit_masks_map) {
         for (auto&& mask : masks) {
             market.ClearMarketEdgesAlgorithmType();
@@ -32,12 +33,21 @@ inline auto Experiment(
             }
             mask_to_welrafe[mask] = welrafe;
             //std::cout << "Welrafe: " << mask_to_welrafe[mask] << std::endl;
-            best_brute_force_welrafe = std::max(best_brute_force_welrafe, mask_to_welrafe[mask]);
+            if (welrafe > best_brute_force_welrafe) {
+                best_mask = mask;
+                best_brute_force_welrafe = welrafe;
+            }
         }
     }
     market.ClearMarketEdgesAlgorithmType();
     Algorithm(market);
     market.SolveAuxiliarySubtask();
     float algorithm_welrafe = market.CalculateWelfare();
+    std::cout << "algorithm l plus mask: ";
+    PrintVector(market.GetLplushLinesMask());
+    std::cout << std::endl;
+    std::cout << "brute force best mask: ";
+    PrintVector(MaskToVector(best_mask, market.GetEdges().size()));
+    std::cout << std::endl;
     return std::make_pair(best_brute_force_welrafe, algorithm_welrafe);
 }
