@@ -22,7 +22,8 @@ inline auto Experiment(
             for (size_t i = 0; i < edges.size(); i++) {
                 if ((mask >> i) & 1) {
                     edges[i]->SetAlgorithmType(AlgorithmType::L_plus);
-                    edges[i]->SetLineExpand();
+                } else {
+                    edges[i]->SetAlgorithmType(AlgorithmType::L_minus);
                 }
             }
             market.SolveAuxiliarySubtask();
@@ -32,6 +33,10 @@ inline auto Experiment(
                 exit(1);
             }
             mask_to_welrafe[mask] = welrafe;
+            //std::cout << "Mask: \n";
+            //PrintVector(MaskToVector(mask, market.GetEdges().size()));
+            //std::cout << std::endl;
+            //PrintVector(market.GetLplushLinesMask());
             //std::cout << "Welrafe: " << mask_to_welrafe[mask] << std::endl;
             if (welrafe > best_brute_force_welrafe) {
                 best_mask = mask;

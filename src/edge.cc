@@ -13,7 +13,7 @@ Edge::Edge(double et, double Q, double ef, double Ev_coeff, std::shared_ptr<Node
 
 void Edge::CalcEFunction() {
     if (is_expand_) {
-        E_ = [&](auto&& q)->double {
+        E_ = [&](auto&& q)-> double {
             if (fabs(q) > Q_) {
                 auto val = (fabs(q) - Q_);
                 return ef_ + Ev_coeff_ * val * val + et_ * fabs(q);

@@ -175,6 +175,13 @@ PiecewiseLinearFunction StarChainMarket::CreateDeltaSForLine(std::shared_ptr<Nod
 
 void StarChainMarket::SolveAuxiliarySubtask() {
     std::vector<bool> used(nodes_.size(), false);
+    for (auto&& edge : edges_) {
+        if (edge->GetAlgorithmType() == AlgorithmType::L_plus) {
+            edge->SetLineExpand();
+        } else {
+            edge->SetLineNotExpand();
+        }
+    }
     FindSDBalance(tree_root_pos_, used);
     used.assign(nodes_.size(), false);
     FindMarketParameters(nullptr, tree_root_pos_, used, -1);
@@ -346,7 +353,6 @@ long double StarChainMarket::CalculateWelfare() {
 
 void StarChainMarket::ClearMarketEdgesAlgorithmType() {
     for (auto&& edge : GetEdges()) {
-        edge->SetLineNotExpand();
         edge->SetAlgorithmType(AlgorithmType::L_undefined);
     }
 }
